@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Workout Tracker</title>
+<style>
+  :root {
+    --royal: #2b50d6;
+    --royal-dark: #2546b8;
+    --accent-purple: #8a3fd1;
+    --danger: #d43f3f;
+    --muted-bg: #f1f5ff;
+    --card-bg: #ffffff;
+  }
+
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 16px;
+    background: #f6f8fb;
+    color: #222;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--royal);
+    margin-bottom: 20px;
+    font-size: 1.6rem;
+  }
+
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+
+  thead th {
+    background: var(--royal);
+    color: white;
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  tbody tr.set-row {
+    background: var(--card-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+  }
+
+  tbody td {
+    padding: 10px 8px;
+    border: 1px solid #e9eefc;
+    vertical-align: middle;
+  }
+
+  td[contenteditable="true"] {
+    min-width: 70px;
+  }
+
+  td[contenteditable="true"]:focus {
+    outline: 2px solid var(--accent-purple);
+    background: #fbf4ff;
+  }
+
+  select {
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #d7defb;
+    background: var(--muted-bg);
+  }
+
+  .controls {
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  .btn {
+    background: linear-gradient(180deg, var(--royal), var(--royal-dark));
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    margin: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(43, 80, 214, 0.15);
+    font-size: 0.95rem;
+  }
+
+  .btn:active { transform: translateY(1px); }
+
+  .btn.secondary {
+    background: linear-gradient(180deg, #2e8f6f, #15764f);
+  }
+
+  .delete-small {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .workout-cell {
+    font-weight: 600;
+    min-width: 160px;
+  }
+
+  /* --- Mobile Styling --- */
+  @media (max-width: 700px) {
+    h1 { font-size: 1.4rem; }
+
+    table, thead, tbody, th, td, tr {
+      display: block;
+      width: 100%;
+    }
+
+    thead { display: none; }
+
+    tbody tr.set-row {
+      margin-bottom: 14px;
+      border-radius: 12px;
+      overflow: hidden;
+      padding: 12px;
+      border: 1px solid #dee3f7;
+    }
+
+    tbody td {
+      border: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 0.9rem;
+    }
+
+    tbody td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: var(--royal);
+      flex: 1;
+    }
+
+    .workout-cell {
+      font-size: 1rem;
+      background: var(--muted-bg);
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .delete-small {
+      align-self: flex-end;
+      margin-top: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      display: block;
+      margin: 8px 0;
+      padding: 12px;
+      font-size: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Workout Tracker</h1>
+
+<div class="table-wrap">
+  <table id="workoutTable">
+    <thead>
+      <tr>
+        <th>Workout</th>
+        <th>Set</th>
+        <th>Reps</th>
+        <th>Weight (kg)</th>
+        <th>Rest</th>
+        <th>Notes</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="set-row">
+        <td class="workout-cell" contenteditable="true" rowspan="3" data-label="Workout">Low Incline Dumbbell Press</td>
+        <td contenteditable="true" data-label="Set">Set 1</td>
+        <td contenteditable="true" data-label="Reps">8-10</td>
+        <td contenteditable="true" data-label="Weight (kg)">25</td>
+        <td data-label="Rest">
+          <select>
+            <option>30s</option>
+            <option>60s</option>
+            <option selected>90s</option>
+          </select>
+        </td>
+        <td contenteditable="true" data-label="Notes">-</td>
+        <td rowspan="3" data-label="Delete">
+          <button class="delete-small" onclick="deleteGroup(this)">✕</button>
+        </td>
+      </tr>
+      <tr class="set-row">
+        <td contenteditable="true" data-label="Set">Set 2</td>
+        <td contenteditable="true" data-label="Reps">8-10</td>
+        <td contenteditable="true" data-label="Weight (kg)">25</td>
+        <td data-label="Rest">
+          <select>
+            <option>30s</option>
+            <option>60s</option>
+            <option selected>90s</option>
+          </select>
+        </td>
+        <td contenteditable="true" data-label="Notes">-</td>
+      </tr>
+      <tr class="set-row">
+        <td contenteditable="true" data-label="Set">Set 3</td>
+        <td contenteditable="true" data-label="Reps">8-10</td>
+        <td contenteditable="true" data-label="Weight (kg)">25</td>
+        <td data-label="Rest">
+          <select>
+            <option>30s</option>
+            <option>60s</option>
+            <option selected>90s</option>
+          </select>
+        </td>
+        <td contenteditable="true" data-label="Notes">-</td>
+      </tr>
+      <tr class="gap-row"><td colspan="7"></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="controls">
+  <button class="btn" onclick="addWorkoutPrompt()">➕ Add Workout (3 sets)</button>
+  <button class="btn secondary" onclick="saveData()">💾 Save</button>
+  <button class="btn" onclick="loadData()">📂 Load</button>
+</div>
+
+<script>
+  /* keep your existing JS unchanged — no change needed */
+</script>
+
+</body>
+</html>
