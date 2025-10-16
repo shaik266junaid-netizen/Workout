@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Workout Tracker</title>
+<style>
+  :root{
+    --royal: #2b50d6;
+    --royal-dark: #2546b8;
+    --accent-purple: #8a3fd1;
+    --danger: #d43f3f;
+    --muted-bg: #f1f5ff;
+    --card-bg:#ffffff;
+  }
+
+  body{
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 24px;
+    background: #f6f8fb;
+    color: #222;
+  }
+
+  h1{
+    text-align:center;
+    color:var(--royal);
+    margin-bottom:18px;
+  }
+
+  .table-wrap{
+    width:100%;
+    overflow-x:auto;
+  }
+
+  table{
+    width:100%;
+    border-collapse: separate;
+    border-spacing: 0 10px; /* vertical gaps between groups */
+    background: transparent;
+  }
+
+  thead th{
+    background: var(--royal);
+    color: white;
+    padding: 12px 10px;
+    text-align:left;
+    font-weight:600;
+    border-radius:8px;
+  }
+
+  tbody tr.set-row{
+    background: var(--card-bg);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    border-radius:6px;
+  }
+
+  tbody td{
+    padding: 12px 10px;
+    border: 1px solid #e9eefc;
+    vertical-align: middle;
+  }
+
+  tbody tr.gap-row td{
+    border: none;
+    background: transparent;
+    padding: 6px;
+    height: 12px;
+  }
+
+  td[contenteditable="true"]{
+    min-width: 80px;
+  }
+
+  td[contenteditable="true"]:focus{
+    outline: 2px solid var(--accent-purple);
+    background: #fbf4ff;
+  }
+
+  select {
+    padding:6px 8px;
+    border-radius:6px;
+    border:1px solid #d7defb;
+    background: var(--muted-bg);
+    min-width:72px;
+  }
+
+  .controls{
+    margin-top:18px;
+    text-align:center;
+  }
+
+  .btn{
+    background: linear-gradient(180deg,var(--royal),var(--royal-dark));
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin: 0 8px;
+    cursor: pointer;
+    font-weight:600;
+    box-shadow: 0 4px 10px rgba(43,80,214,0.12);
+  }
+
+  .btn:active{ transform: translateY(1px); }
+
+  .btn.secondary{
+    background: linear-gradient(180deg,#2e8f6f,#15764f);
+  }
+
+  .delete-small{
+    background: var(--danger);
+    color:white;
+    border:none;
+    padding:6px 8px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  .workout-cell{
+    font-weight:600;
+    min-width:180px;
+  }
+
+  @media (max-width:700px){
+    td, thead th { padding:8px; font-size:14px; }
+    .btn { padding:8px 12px; margin:6px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Workout Tracker</h1>
+
+<div class="table-wrap">
+  <table id="workoutTable">
+    <thead>
+      <tr>
+        <th>Workout</th>
+        <th>Set</th>
+        <th>Reps</th>
+        <th>Weight (kg)</th>
+        <th>Rest</th>
+        <th>Notes</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- initial example group -->
+      <tr class="set-row">
+        <td class="workout-cell" contenteditable="true" rowspan="3">Low Incline Dumbbell Press</td>
+        <td contenteditable="true">Set 1</td>
+        <td contenteditable="true">8-10</td>
+        <td contenteditable="true">25</td>
+        <td>
+          <select>
+            <option>30s</option>
+            <option>60s</option>
+            <option selected>90s</option>
+          </select>
+        </td>
+        <td contenteditable="true">-</td>
+        <td rowspan="3">
+          <button class="delete-small" onclick="deleteGroup(this)">✕</button>
+        </td>
+      </tr>
+      <tr class="set-row">
+        <td contenteditable="true">Set 2</td>
+        <td contenteditable="true">8-10</td>
+        <td contenteditable="true">25</td>
+        <td>
+          <select>
+            <option>30s</option>
+            <option>60s</option>
+            <option selected>90s</option>
+          </select>
+        </td>
+        <td contenteditable="true">-</td>
+      </tr>
+      <tr class="set-row">
+        <td contenteditable="true">Set 3</td>
+        <td contenteditable="true">8-10</td>
+        <td contenteditable="true">25</td>
+        <td>
+          <select>
+            <option>30s</option>
+            <option>60s</option>
+            <option selected>90s</option>
+          </select>
+        </td>
+        <td contenteditable="true">-</td>
+      </tr>
+      <tr class="gap-row"><td colspan="7"></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="controls">
+  <button class="btn" onclick="addWorkoutPrompt()">➕ Add Workout (3 sets)</button>
+  <button class="btn secondary" onclick="saveData()">💾 Save</button>
+  <button class="btn" onclick="loadData()">📂 Load</button>
+</div>
+
+<script>
+/* Utility: create a rest select element */
+function makeRestSelect(selected){
+  const select = document.createElement('select');
+  ["30s","60s","90s"].forEach(opt=>{
+    const o = document.createElement('option');
+    o.text = opt;
+    if(opt === selected) o.selected = true;
+    select.appendChild(o);
+  });
+  return select;
+}
+
+/* Adds a workout group with given name and number of sets (default 3) */
+function addWorkout(name = "New Exercise", sets = 3){
+  const tbody = document.querySelector("#workoutTable tbody");
+  // create the rows for this group
+  for(let i=0;i<sets;i++){
+    const tr = document.createElement('tr');
+    tr.className = 'set-row';
+
+    if(i===0){
+      // workout cell with rowspan
+      const workoutCell = document.createElement('td');
+      workoutCell.className = 'workout-cell';
+      workoutCell.contentEditable = "true";
+      workoutCell.rowSpan = sets;
+      workoutCell.innerText = name;
+      tr.appendChild(workoutCell);
+
+      // set cell
+      const setCell = document.createElement('td');
+      setCell.contentEditable = "true";
+      setCell.innerText = `Set ${i+1}`;
+      tr.appendChild(setCell);
+
+      // reps
+      const reps = document.createElement('td');
+      reps.contentEditable = "true";
+      reps.innerText = "8-10";
+      tr.appendChild(reps);
+
+      // weight
+      const weight = document.createElement('td');
+      weight.contentEditable = "true";
+      weight.innerText = "-";
+      tr.appendChild(weight);
+
+      // rest
+      const rest = document.createElement('td');
+      rest.appendChild(makeRestSelect("90s"));
+      tr.appendChild(rest);
+
+      // notes
+      const notes = document.createElement('td');
+      notes.contentEditable = "true";
+      notes.innerText = "-";
+      tr.appendChild(notes);
+
+      // delete cell with rowspan
+      const delCell = document.createElement('td');
+      delCell.rowSpan = sets;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-small';
+      delBtn.innerText = '✕';
+      delBtn.onclick = function(){ deleteGroup(delBtn); };
+      delCell.appendChild(delBtn);
+      tr.appendChild(delCell);
+    } else {
+      // rows after first: set, reps, weight, rest, notes (no workout or delete cells)
+      const setCell = document.createElement('td');
+      setCell.contentEditable = "true";
+      setCell.innerText = `Set ${i+1}`;
+      tr.appendChild(setCell);
+
+      const reps = document.createElement('td');
+      reps.contentEditable = "true";
+      reps.innerText = "8-10";
+      tr.appendChild(reps);
+
+      const weight = document.createElement('td');
+      weight.contentEditable = "true";
+      weight.innerText = "-";
+      tr.appendChild(weight);
+
+      const rest = document.createElement('td');
+      rest.appendChild(makeRestSelect("90s"));
+      tr.appendChild(rest);
+
+      const notes = document.createElement('td');
+      notes.contentEditable = "true";
+      notes.innerText = "-";
+      tr.appendChild(notes);
+    }
+
+    tbody.appendChild(tr);
+  }
+
+  // add gap row
+  const gap = document.createElement('tr');
+  gap.className = 'gap-row';
+  const gapCell = document.createElement('td');
+  gapCell.colSpan = 7;
+  gap.appendChild(gapCell);
+  tbody.appendChild(gap);
+}
+
+/* Prompt wrapper so user can name workout */
+function addWorkoutPrompt(){
+  const name = prompt("Enter workout name:", "New Exercise");
+  if(name === null) return; // canceled
+  addWorkout(name, 3);
+}
+
+/* Delete a whole group: the delete button sits in the first row's last cell which has rowspan = sets */
+function deleteGroup(btn){
+  const td = btn.closest('td');
+  const firstRow = td.closest('tr');
+  // determine how many rows to remove by checking the rowspan of the workout cell in the same row
+  const workoutCell = firstRow.querySelector('td.workout-cell');
+  let span = 1;
+  if(workoutCell && workoutCell.rowSpan){
+    span = workoutCell.rowSpan;
+  } else {
+    span = 3;
+  }
+
+  const tbody = document.querySelector("#workoutTable tbody");
+  // compute starting index of the firstRow among tbody children
+  const rowsArray = Array.from(tbody.children);
+  const startIndex = rowsArray.indexOf(firstRow);
+  if(startIndex === -1) return;
+
+  // remove the group's rows
+  for(let i=0;i<span;i++){
+    const r = tbody.children[startIndex]; // after each removal, next row occupies same index
+    if(r) tbody.removeChild(r);
+  }
+  // remove following gap row if exists
+  if(tbody.children[startIndex] && tbody.children[startIndex].classList.contains('gap-row')){
+    tbody.removeChild(tbody.children[startIndex]);
+  }
+}
+
+/* Fixed Save data: build groups correctly and write to localStorage */
+function saveData(){
+  const tbody = document.querySelector("#workoutTable tbody");
+  const rows = Array.from(tbody.children);
+  const groups = [];
+  let i = 0;
+
+  while(i < rows.length){
+    const row = rows[i];
+    if(row.classList.contains('gap-row')){
+      i++;
+      continue;
+    }
+
+    // expect first row of a group to contain the workout-cell
+    const workoutCell = row.querySelector('td.workout-cell');
+    if(!workoutCell){
+      // If a row lacks workout-cell, skip it (defensive)
+      i++;
+      continue;
+    }
+
+    const span = workoutCell.rowSpan || 3;
+    const group = { workout: workoutCell.innerText.trim(), sets: [] };
+
+    for(let r = 0; r < span; r++){
+      const current = rows[i + r];
+      if(!current) continue;
+
+      if(r === 0){
+        // columns for first row: [workout, set, reps, weight, rest, notes, delete]
+        const setText = (current.children[1] && current.children[1].innerText) ? current.children[1].innerText.trim() : '';
+        const reps = (current.children[2] && current.children[2].innerText) ? current.children[2].innerText.trim() : '';
+        const weight = (current.children[3] && current.children[3].innerText) ? current.children[3].innerText.trim() : '';
+        const restSelect = current.children[4] ? current.children[4].querySelector('select') : null;
+        const rest = restSelect ? restSelect.value : (current.children[4] ? current.children[4].innerText.trim() : '');
+        const notes = (current.children[5] && current.children[5].innerText) ? current.children[5].innerText.trim() : '';
+        group.sets.push({ set: setText, reps, weight, rest, notes });
+      } else {
+        // columns for subsequent rows: [set, reps, weight, rest, notes]
+        const setText = (current.children[0] && current.children[0].innerText) ? current.children[0].innerText.trim() : '';
+        const reps = (current.children[1] && current.children[1].innerText) ? current.children[1].innerText.trim() : '';
+        const weight = (current.children[2] && current.children[2].innerText) ? current.children[2].innerText.trim() : '';
+        const restSelect = current.children[3] ? current.children[3].querySelector('select') : null;
+        const rest = restSelect ? restSelect.value : (current.children[3] ? current.children[3].innerText.trim() : '');
+        const notes = (current.children[4] && current.children[4].innerText) ? current.children[4].innerText.trim() : '';
+        group.sets.push({ set: setText, reps, weight, rest, notes });
+      }
+    }
+
+    groups.push(group);
+
+    // move index past this group
+    i += span;
+
+    // skip gap row if present
+    if(rows[i] && rows[i].classList.contains('gap-row')) i++;
+  }
+
+  // write to localStorage
+  try {
+    localStorage.setItem('workoutGroups', JSON.stringify(groups));
+    alert('✅ Saved locally');
+  } catch (e) {
+    console.error('Save failed', e);
+    alert('Save failed — localStorage error. Check browser privacy settings or storage full.');
+  }
+}
+
+/* Load data and rebuild table body */
+function loadData(){
+  const raw = localStorage.getItem('workoutGroups');
+  if(!raw){
+    alert('No saved data found.');
+    return;
+  }
+  let groups;
+  try{ groups = JSON.parse(raw); } catch(e){ alert('Saved data corrupted'); return; }
+
+  const tbody = document.querySelector("#workoutTable tbody");
+  // clear tbody
+  tbody.innerHTML = '';
+
+  groups.forEach(group=>{
+    const sets = group.sets.length || 3;
+    for(let i=0;i<sets;i++){
+      const tr = document.createElement('tr');
+      tr.className = 'set-row';
+      if(i===0){
+        const workoutCell = document.createElement('td');
+        workoutCell.className = 'workout-cell';
+        workoutCell.contentEditable = "true";
+        workoutCell.rowSpan = sets;
+        workoutCell.innerText = group.workout || 'New Exercise';
+        tr.appendChild(workoutCell);
+
+        const setCell = document.createElement('td');
+        setCell.contentEditable = "true";
+        setCell.innerText = group.sets[i] ? group.sets[i].set : `Set ${i+1}`;
+        tr.appendChild(setCell);
+
+        const reps = document.createElement('td');
+        reps.contentEditable = "true";
+        reps.innerText = group.sets[i] ? group.sets[i].reps : '8-10';
+        tr.appendChild(reps);
+
+        const weight = document.createElement('td');
+        weight.contentEditable = "true";
+        weight.innerText = group.sets[i] ? group.sets[i].weight : '-';
+        tr.appendChild(weight);
+
+        const rest = document.createElement('td');
+        rest.appendChild(makeRestSelect((group.sets[i] && group.sets[i].rest) || '90s'));
+        tr.appendChild(rest);
+
+        const notes = document.createElement('td');
+        notes.contentEditable = "true";
+        notes.innerText = group.sets[i] ? group.sets[i].notes : '-';
+        tr.appendChild(notes);
+
+        const delCell = document.createElement('td');
+        delCell.rowSpan = sets;
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-small';
+        delBtn.innerText = '✕';
+        delBtn.onclick = function(){ deleteGroup(delBtn); };
+        delCell.appendChild(delBtn);
+        tr.appendChild(delCell);
+      } else {
+        const setCell = document.createElement('td');
+        setCell.contentEditable = "true";
+        setCell.innerText = group.sets[i] ? group.sets[i].set : `Set ${i+1}`;
+        tr.appendChild(setCell);
+
+        const reps = document.createElement('td');
+        reps.contentEditable = "true";
+        reps.innerText = group.sets[i] ? group.sets[i].reps : '8-10';
+        tr.appendChild(reps);
+
+        const weight = document.createElement('td');
+        weight.contentEditable = "true";
+        weight.innerText = group.sets[i] ? group.sets[i].weight : '-';
+        tr.appendChild(weight);
+
+        const rest = document.createElement('td');
+        rest.appendChild(makeRestSelect((group.sets[i] && group.sets[i].rest) || '90s'));
+        tr.appendChild(rest);
+
+        const notes = document.createElement('td');
+        notes.contentEditable = "true";
+        notes.innerText = group.sets[i] ? group.sets[i].notes : '-';
+        tr.appendChild(notes);
+      }
+      tbody.appendChild(tr);
+    }
+    // gap row
+    const gap = document.createElement('tr');
+    gap.className = 'gap-row';
+    const gapCell = document.createElement('td');
+    gapCell.colSpan = 7;
+    gap.appendChild(gapCell);
+    tbody.appendChild(gap);
+  });
+
+  alert('📂 Loaded saved workouts');
+}
+
+/* Ensure first-time users still have something shown */
+(function ensureExample(){
+  const tbody = document.querySelector("#workoutTable tbody");
+  if(tbody.children.length === 0) addWorkout("Low Incline Dumbbell Press", 3);
+})();
+</script>
+
+</body>
+</html>
